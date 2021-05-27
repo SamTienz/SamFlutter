@@ -1,106 +1,108 @@
 import 'package:flutter/material.dart';
-import 'package:english_words/english_words.dart';
 
-void main() => runApp(MyApp());
+void main() {
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Startup Name Generator',
-      theme: ThemeData(
-        primaryColor: Colors.white
-      ),
-      home: RandomWords(),
-    );
+    return MaterialApp(title: "My App", home: MyCustomForm());
   }
 }
 
-class RandomWords extends StatefulWidget {
+class MyCustomForm extends StatefulWidget {
   @override
-  _RandomWordsState createState() => _RandomWordsState();
+  _MyCustomFormState createState() => _MyCustomFormState();
 }
 
-class _RandomWordsState extends State<RandomWords> {
-  final _suggestions = <WordPair>[];
-  final _saved = <WordPair>{};
-  final _biggerFont = TextStyle(fontSize: 18.0);
+class _MyCustomFormState extends State<MyCustomForm> {
+  final myController = TextEditingController();
+  late FocusNode myFocusNode;
+
+  void _printLatestValue() {
+    print('TextField text did change:${myController.text} print by Controller');
+  }
+
+  void _showAlertDialog(BuildContext context) {
+    final alert = AlertDialog(
+      content: myController.text == ""
+          ? Text("No any input")
+          : Text("${myController.text}"),
+    );
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    myFocusNode = FocusNode();
+    myController.addListener(_printLatestValue);
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    myFocusNode.dispose();
+    myController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Startup Name Generator'),
-        actions: [IconButton(icon: Icon(Icons.list), onPressed: _pushSaved)],
+        title: Text("My App"),
       ),
-      body: _buildSuggestions(),
-    );
-  }
-
-  void _pushSaved() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (BuildContext context) {
-          final tiles = _saved.map(
-            (WordPair pair) {
-              return ListTile(
-                title: Text(
-                  pair.asPascalCase,
-                  style: _biggerFont,
-                ),
-              );
-            },
-          );
-          final divided = ListTile.divideTiles(
-            context: context,
-            tiles: tiles,
-          ).toList();
-
-          return Scaffold(
-            appBar: AppBar(
-              title: Text('Saved Suggestions'),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+            child: TextField(
+              focusNode: myFocusNode,
+              controller: myController,
+              decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  hintText: "Enter a search term"),
             ),
-            body: ListView(children: divided),
-          );
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+            child: TextFormField(
+              onChanged: (text) {
+                print("TextFormField text did change $text");
+              },
+              decoration: InputDecoration(
+                  border: UnderlineInputBorder(),
+                  hintText: "Enter your username"),
+            ),
+          ),
+          SizedBox(
+            height: 16,
+          ),
+          TextButton(
+            onPressed: () {
+              _showAlertDialog(context);
+            },
+            child: Text("Print the first TextField text"),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          myFocusNode.requestFocus();
+          // _showAlertDialog(context);
         },
+        child: Icon(Icons.center_focus_strong),
       ),
-    );
-  }
-
-  Widget _buildSuggestions() {
-    return ListView.builder(
-      padding: EdgeInsets.all(16.0),
-      itemBuilder: (context, i) {
-        if (i.isOdd) return Divider();
-
-        final index = i ~/ 2;
-        if (index >= _suggestions.length) {
-          _suggestions.addAll(generateWordPairs().take(10));
-        }
-        return _buildRow(_suggestions[index]);
-      },
-    );
-  }
-
-  Widget _buildRow(WordPair pair) {
-    final alreadySaved = _saved.contains(pair);
-    return ListTile(
-      title: Text(
-        pair.asPascalCase,
-        style: _biggerFont,
-      ),
-      trailing: Icon(
-        alreadySaved ? Icons.favorite : Icons.favorite_border,
-        color: alreadySaved ? Colors.red : null,
-      ),
-      onTap: () {
-        setState(() {
-          if (alreadySaved) {
-            _saved.remove(pair);
-          } else {
-            _saved.add(pair);
-          }
-        });
-      },
     );
   }
 }
